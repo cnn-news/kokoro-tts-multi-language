@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTS Studio Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:           #0d1117;
+  --surface:      #161b22;
+  --surface2:     #21262d;
+  --surface3:     #2d333b;
+  --border:       #30363d;
+  --accent:       #58a6ff;
+  --accent-dim:   #1f6feb33;
+  --accent-hover: #388bfd;
+  --text:         #e6edf3;
+  --text-muted:   #8b949e;
+  --text-dim:     #6e7681;
+  --success:      #3fb950;
+  --success-dim:  #3fb95022;
+  --error:        #f85149;
+  --error-dim:    #f8514922;
+  --warning:      #d29922;
+  --warning-dim:  #d2992222;
+  --radius:       8px;
+  --radius-sm:    5px;
+  --sidebar-w:    340px;
+  --header-h:     56px;
+  --tabnav-h:     44px;
+  --footer-h:     36px;
+  --transition:   0.18s ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text);
+             font-family: 'Inter', system-ui, sans-serif; font-size: 14px;
+             line-height: 1.5; overflow: hidden; }
+button { cursor: pointer; font-family: inherit; font-size: inherit; }
+select, input, textarea { font-family: inherit; font-size: inherit; color: var(--text); }
+a { color: var(--accent); text-decoration: none; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ── App Shell ──────────────────────────────────────────────────────────── */
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+#header {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px;
+  gap: 12px; flex-shrink: 0; z-index: 10;
+}
+#header .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+#header .logo span { color: var(--accent); }
+#header .badge {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 20px;
+  background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent)33;
+}
+#header .spacer { flex: 1; }
+#status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success); box-shadow: 0 0 6px var(--success);
+  transition: background var(--transition), box-shadow var(--transition);
+}
+#status-dot.busy { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+#status-dot.error { background: var(--error); box-shadow: 0 0 6px var(--error); }
+#status-label { font-size: 12px; color: var(--text-muted); }
+
+/* ── Tab Nav ─────────────────────────────────────────────────────────────── */
+#tab-nav {
+  height: var(--tabnav-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; padding: 0 16px; gap: 4px;
+  align-items: flex-end; flex-shrink: 0;
+}
+.tab-btn {
+  padding: 8px 16px; border: none; background: transparent;
+  color: var(--text-muted); font-weight: 500; font-size: 13px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition),
+              background var(--transition);
+}
+.tab-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+#main {
+  flex: 1; display: flex; overflow: hidden;
+  height: calc(100vh - var(--header-h) - var(--tabnav-h) - var(--footer-h));
+}
+.tab-panel { display: none; width: 100%; flex-direction: row; }
+.tab-panel.active { display: flex; }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: 20px 16px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.sidebar-section { display: flex; flex-direction: column; gap: 8px; }
+.sidebar-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ── Controls ────────────────────────────────────────────────────────────── */
+select, input[type="text"] {
+  width: 100%; padding: 8px 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+select:hover, input[type="text"]:hover { border-color: var(--text-dim); }
+select:focus, input[type="text"]:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+input[type="text"] {
+  background-image: none; padding-right: 10px; cursor: text;
+}
+select option { background: var(--surface2); }
+
+/* Speed Slider */
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--accent); min-width: 36px; text-align: right;
+}
+input[type="range"] {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--surface3) var(--pct, 50%));
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--accent)66;
+  transition: box-shadow var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 4px var(--accent)44;
+}
+
+/* Radio group */
+.radio-group { display: flex; gap: 8px; }
+.radio-pill {
+  flex: 1; text-align: center; padding: 7px 0;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text-muted); font-size: 13px;
+  background: var(--surface2);
+  transition: all var(--transition);
+}
+.radio-pill:hover { border-color: var(--text-dim); color: var(--text); }
+.radio-pill.active { border-color: var(--accent); color: var(--accent);
+                     background: var(--accent-dim); }
+
+/* Primary button */
+.btn-primary {
+  width: 100%; padding: 10px; border: none;
+  background: var(--accent); color: #0d1117; font-weight: 600;
+  border-radius: var(--radius); font-size: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background var(--transition), transform var(--transition),
+              box-shadow var(--transition);
+}
+.btn-primary:hover { background: var(--accent-hover);
+  box-shadow: 0 4px 16px var(--accent)44; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled {
+  background: var(--surface3); color: var(--text-dim);
+  cursor: not-allowed; transform: none; box-shadow: none;
+}
+
+/* ── Content Pane ────────────────────────────────────────────────────────── */
+.content {
+  flex: 1; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* ── Textarea ────────────────────────────────────────────────────────────── */
+.textarea-wrap { position: relative; }
+textarea {
+  width: 100%; min-height: 180px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+  resize: vertical; line-height: 1.6; font-size: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+textarea::placeholder { color: var(--text-dim); }
+
+/* ── Lang Badge ──────────────────────────────────────────────────────────── */
+#lang-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-muted);
+  opacity: 0; transform: translateY(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease, color var(--transition),
+              background var(--transition), border-color var(--transition);
+}
+#lang-badge.show { opacity: 1; transform: translateY(0); }
+#lang-badge.en { background: #1f3a5f33; border-color: #388bfd55; color: var(--accent); }
+#lang-badge.vi { background: #1e3a2533; border-color: var(--success)55; color: var(--success); }
+#lang-badge.ja { background: #3a1e1e33; border-color: var(--error)55; color: #f0a0a0; }
+#lang-badge.unknown { background: var(--surface2); border-color: var(--border); color: var(--text-muted); }
+
+/* ── Progress Bar ────────────────────────────────────────────────────────── */
+.progress-wrap {
+  display: none; flex-direction: column; gap: 6px;
+}
+.progress-wrap.show { display: flex; }
+.progress-label { font-size: 12px; color: var(--text-muted); }
+.progress-track {
+  height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden;
+}
+.progress-bar {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width 0.4s ease; width: 0%;
+}
+.progress-bar.indeterminate {
+  width: 40%; animation: indeterminate 1.2s ease-in-out infinite;
+}
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ── Audio Player ────────────────────────────────────────────────────────── */
+#audio-wrap {
+  display: none; flex-direction: column; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+#audio-wrap.show { display: flex; }
+#audio-player { width: 100%; height: 36px; border-radius: 4px; outline: none; }
+#audio-meta { font-size: 12px; color: var(--text-muted); }
+#audio-meta strong { color: var(--text); }
+
+/* ── Status Message ──────────────────────────────────────────────────────── */
+.status-msg {
+  font-size: 12px; padding: 8px 12px; border-radius: var(--radius-sm);
+  display: none;
+}
+.status-msg.show { display: block; }
+.status-msg.ok     { background: var(--success-dim); color: var(--success);
+                     border-left: 3px solid var(--success); }
+.status-msg.error  { background: var(--error-dim);   color: var(--error);
+                     border-left: 3px solid var(--error); }
+.status-msg.info   { background: var(--accent-dim);  color: var(--accent);
+                     border-left: 3px solid var(--accent); }
+
+/* ── Drop Zone ───────────────────────────────────────────────────────────── */
+#drop-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  color: var(--text-muted);
+}
+#drop-zone:hover, #drop-zone.drag-over {
+  border-color: var(--accent); background: var(--accent-dim); color: var(--text);
+}
+#drop-zone .drop-icon { font-size: 32px; margin-bottom: 8px; }
+#drop-zone p { font-size: 13px; }
+#drop-zone small { font-size: 11px; color: var(--text-dim); }
+
+/* ── File Chips ──────────────────────────────────────────────────────────── */
+#file-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  min-height: 0;
+}
+.file-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px 4px 10px; border-radius: 20px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 12px; max-width: 200px;
+}
+.file-chip .chip-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+}
+.file-chip .chip-lang { font-size: 13px; }
+.file-chip .chip-remove {
+  color: var(--text-dim); background: none; border: none;
+  font-size: 14px; line-height: 1; padding: 0 2px; margin-left: 2px;
+  cursor: pointer; border-radius: 50%;
+  transition: color var(--transition), background var(--transition);
+}
+.file-chip .chip-remove:hover { color: var(--error); background: var(--error-dim); }
+
+/* ── Batch Progress ──────────────────────────────────────────────────────── */
+#batch-progress-wrap {
+  display: none; flex-direction: column; gap: 6px;
+}
+#batch-progress-wrap.show { display: flex; }
+
+/* ── Log Box ─────────────────────────────────────────────────────────────── */
+#log-box {
+  display: none; flex-direction: column; gap: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+  max-height: 280px; overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+}
+#log-box.show { display: flex; }
+.log-entry { padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+.log-entry .log-icon { flex-shrink: 0; }
+.log-entry .log-text { color: var(--text); }
+.log-entry .log-meta { color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+.log-entry.log-ok .log-text  { color: var(--success); }
+.log-entry.log-err .log-text { color: var(--error); }
+
+/* ── Section Title ───────────────────────────────────────────────────────── */
+.section-title {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+#footer {
+  height: var(--footer-h); background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px;
+  gap: 20px; flex-shrink: 0;
+}
+#footer span { font-size: 11px; color: var(--text-dim); }
+#footer kbd {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  padding: 1px 5px; border-radius: 3px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.spinner.show { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Conditional panels ──────────────────────────────────────────────────── */
+.vi-only, .ja-only { display: none; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── Header ───────────────────────────────────────────────────────────── -->
+<header id="header">
+  <div class="logo">TTS <span>Studio Pro</span></div>
+  <span class="badge">v1.0</span>
+  <div class="spacer"></div>
+  <span id="status-label">Ready</span>
+  <div id="status-dot"></div>
+</header>
+
+<!-- ── Tab Nav ──────────────────────────────────────────────────────────── -->
+<nav id="tab-nav">
+  <button class="tab-btn active" data-tab="single" onclick="switchTab('single')">
+    🎙️ Thu Giọng Nhanh
+  </button>
+  <button class="tab-btn" data-tab="batch" onclick="switchTab('batch')">
+    📁 Batch Files
+  </button>
+</nav>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<main id="main">
+
+  <!-- ══ TAB 1: Thu Giọng Nhanh ══════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-single">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Ngôn ngữ</div>
+        <select id="s-lang" onchange="onSingleLangChange()">
+          <option value="auto">🔍 Tự động detect</option>
+          <option value="en">🇺🇸 Tiếng Anh</option>
+          <option value="vi">🇻🇳 Tiếng Việt</option>
+          <option value="ja">🇯🇵 Tiếng Nhật</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section" id="s-voice-section">
+        <div class="sidebar-label">Giọng đọc</div>
+        <select id="s-voice"></select>
+      </div>
+
+      <div class="sidebar-section vi-only" id="s-mode-section">
+        <div class="sidebar-label">Mode (VI)</div>
+        <select id="s-mode">
+          <option value="standard">Standard — Chất lượng cao</option>
+          <option value="turbo">Turbo — Nhanh hơn</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section ja-only" id="s-style-section">
+        <div class="sidebar-label">Phong cách (JA)</div>
+        <select id="s-style">
+          <option value="neutral">Neutral — Bình thường</option>
+          <option value="happy">Happy — Vui vẻ</option>
+          <option value="sad">Sad — Buồn</option>
+          <option value="angry">Angry — Tức giận</option>
+          <option value="surprised">Surprised — Ngạc nhiên</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Tốc độ đọc</div>
+        <div class="slider-row">
+          <span style="font-size:11px;color:var(--text-dim)">0.5×</span>
+          <input type="range" id="s-speed" min="0.5" max="2.0" step="0.05" value="1.3"
+                 oninput="updateSlider(this,'s-speed-val')">
+          <span style="font-size:11px;color:var(--text-dim)">2×</span>
+          <span class="slider-val" id="s-speed-val">1.30×</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn-primary" id="s-btn" onclick="doSynthesize()">
+        <span class="spinner" id="s-spinner"></span>
+        <span id="s-btn-text">🎙️ Tạo Audio</span>
+      </button>
+    </aside>
+
+    <!-- Content -->
+    <section class="content">
+      <div class="section-title">Nhập văn bản</div>
+
+      <div class="textarea-wrap">
+        <textarea id="s-text" rows="8"
+          placeholder="Nhập văn bản tại đây...&#10;&#10;• English: The quick brown fox jumps over the lazy dog.&#10;• Tiếng Việt: Hệ thống phân tích dữ liệu lớn và hiện đại.&#10;• 日本語: 東京は日本の首都で、多くの観光地があります。"
+          oninput="onTextInput()"
+          onkeydown="onTextKeydown(event)"></textarea>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="lang-badge">🔍 Detecting…</span>
+        <span id="char-count" style="font-size:11px;color:var(--text-dim);margin-left:auto"></span>
+      </div>
+
+      <div class="progress-wrap" id="s-progress-wrap">
+        <div class="progress-label" id="s-progress-label">Đang tổng hợp…</div>
+        <div class="progress-track">
+          <div class="progress-bar indeterminate" id="s-progress-bar"></div>
+        </div>
+      </div>
+
+      <div id="audio-wrap">
+        <div class="section-title">Kết quả</div>
+        <audio id="audio-player" controls></audio>
+        <div id="audio-meta"></div>
+      </div>
+
+      <div class="status-msg" id="s-status"></div>
+    </section>
+  </div>
+
+  <!-- ══ TAB 2: Batch Files ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-batch">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Ngôn ngữ batch</div>
+        <select id="b-lang" onchange="onBatchLangChange()">
+          <option value="auto">🔍 Tự động detect mỗi file</option>
+          <option value="en">🇺🇸 Tiếng Anh</option>
+          <option value="vi">🇻🇳 Tiếng Việt</option>
+          <option value="ja">🇯🇵 Tiếng Nhật</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section" id="b-voice-section">
+        <div class="sidebar-label">Giọng đọc</div>
+        <select id="b-voice"></select>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Tốc độ đọc</div>
+        <div class="slider-row">
+          <span style="font-size:11px;color:var(--text-dim)">0.5×</span>
+          <input type="range" id="b-speed" min="0.5" max="2.0" step="0.05" value="1.0"
+                 oninput="updateSlider(this,'b-speed-val')">
+          <span style="font-size:11px;color:var(--text-dim)">2×</span>
+          <span class="slider-val" id="b-speed-val">1.00×</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Định dạng xuất</div>
+        <div class="radio-group">
+          <div class="radio-pill active" id="fmt-wav" onclick="setFormat('WAV')">WAV</div>
+          <div class="radio-pill"        id="fmt-mp3" onclick="setFormat('MP3')">MP3</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Thư mục export</div>
+        <input type="text" id="b-export-dir" value="./output" placeholder="./output">
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn-primary" id="b-btn" onclick="startBatch()"
+              title="Tạo audio cho tất cả file đã chọn">
+        <span class="spinner" id="b-spinner"></span>
+        <span id="b-btn-text">🎙️ Tạo Audio Hàng Loạt</span>
+      </button>
+    </aside>
+
+    <!-- Content -->
+    <section class="content">
+      <div class="section-title">Tệp văn bản</div>
+
+      <!-- Drop Zone -->
+      <div id="drop-zone"
+           ondragover="onDragOver(event)" ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event)" onclick="document.getElementById('file-input').click()">
+        <div class="drop-icon">📂</div>
+        <p>Kéo & thả file .txt vào đây</p>
+        <small>hoặc nhấn để chọn file — hỗ trợ chọn nhiều file cùng lúc</small>
+        <input type="file" id="file-input" accept=".txt" multiple
+               style="display:none" onchange="onFileInputChange(event)">
+      </div>
+
+      <!-- File Chips -->
+      <div id="file-chips"></div>
+
+      <!-- Batch Progress -->
+      <div class="progress-wrap" id="batch-progress-wrap">
+        <div class="progress-label" id="batch-progress-label">Chuẩn bị…</div>
+        <div class="progress-track">
+          <div class="progress-bar" id="batch-progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Log Box -->
+      <div class="section-title" id="log-title" style="display:none">Kết quả</div>
+      <div id="log-box"></div>
+
+      <div class="status-msg" id="b-status"></div>
+    </section>
+  </div>
+
+</main><!-- /#main -->
+
+<!-- ── Footer ───────────────────────────────────────────────────────────── -->
+<footer id="footer">
+  <span>TTS Studio Pro · EN / VI / JA</span>
+  <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Tạo audio</span>
+  <span><kbd>Ctrl</kbd>+<kbd>L</kbd> Xoá text</span>
+  <span style="margin-left:auto" id="footer-engines"></span>
+</footer>
+
+</div><!-- /#app -->
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     JavaScript — TASK-802 / 803 / 804 / 805
+     ═════════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── State ──────────────────────────────────────────────────────────────── */
+const S = {
+  format:        'WAV',
+  batchFiles:    [],          // [{name, content, lang}]
+  batchJobId:    null,
+  batchPoll:     null,
+  batchLogCount: 0,
+  isSynthesizing:false,
+};
+
+/* ── API ────────────────────────────────────────────────────────────────── */
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  return r.json();
+}
+const apiPost = (p, b) => api('POST', p, b);
+const apiGet  = (p)    => api('GET',  p);
+
+/* ── Utilities ──────────────────────────────────────────────────────────── */
+function $id(id)  { return document.getElementById(id); }
+function showMsg(elId, text, type) {
+  const el = $id(elId);
+  el.textContent = text; el.className = `status-msg show ${type}`;
+}
+function hideMsg(elId) { $id(elId).className = 'status-msg'; }
+function setStatus(label, dot) {
+  $id('status-label').textContent = label;
+  $id('status-dot').className = dot || '';
+}
+
+/* ── Slider ─────────────────────────────────────────────────────────────── */
+function updateSlider(el, valId) {
+  const v   = parseFloat(el.value);
+  const pct = ((v - parseFloat(el.min)) / (parseFloat(el.max) - parseFloat(el.min)) * 100).toFixed(1);
+  el.style.setProperty('--pct', pct + '%');
+  $id(valId).textContent = v.toFixed(2) + '×';
+}
+// Init sliders on load
+window.addEventListener('DOMContentLoaded', () => {
+  updateSlider($id('s-speed'), 's-speed-val');
+  updateSlider($id('b-speed'), 'b-speed-val');
+  loadVoices('en', 's-voice');
+  loadVoices('auto', 'b-voice');
+  loadEngineStatus();
+});
+
+/* ── Tab switching ──────────────────────────────────────────────────────── */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p =>
+    p.classList.toggle('active', p.id === 'panel-' + tab));
+}
+
+/* ── Keyboard shortcuts ──────────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); doSynthesize(); }
+  if (e.ctrlKey && e.key === 'l')     { e.preventDefault(); $id('s-text').value = ''; onTextInput(); }
+});
+function onTextKeydown(e) {
+  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); doSynthesize(); }
+}
+
+/* ── Format radio ────────────────────────────────────────────────────────── */
+function setFormat(fmt) {
+  S.format = fmt;
+  $id('fmt-wav').classList.toggle('active', fmt === 'WAV');
+  $id('fmt-mp3').classList.toggle('active', fmt === 'MP3');
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK-804: Language detection badge — debounced realtime
+   ════════════════════════════════════════════════════════════════════════════ */
+let _detectTimer = null;
+
+function onTextInput() {
+  const text = $id('s-text').value;
+  $id('char-count').textContent = text.length > 0 ? `${text.length} ký tự` : '';
+  clearTimeout(_detectTimer);
+  if (text.trim().length < 5) {
+    hideLangBadge(); return;
+  }
+  _detectTimer = setTimeout(() => detectLangBadge(text), 800);
+}
+
+async function detectLangBadge(text) {
+  try {
+    const res  = await apiPost('/api/detect_lang', { text });
+    if (res.status !== 'ok') { hideLangBadge(); return; }
+    const lang = res.lang;
+    const info = {
+      en:      { flag: '🇺🇸', label: 'English',     cls: 'en' },
+      vi:      { flag: '🇻🇳', label: 'Tiếng Việt', cls: 'vi' },
+      ja:      { flag: '🇯🇵', label: '日本語',       cls: 'ja' },
+      unknown: { flag: '❓',   label: 'Không rõ',   cls: 'unknown' },
+    };
+    const d = info[lang] || info.unknown;
+    const badge = $id('lang-badge');
+    badge.textContent = `${d.flag} ${d.label}`;
+    badge.className = `show ${d.cls}`;
+
+    // Auto-update voice dropdown if lang select is "auto"
+    if ($id('s-lang').value === 'auto' && lang !== 'unknown') {
+      loadVoices(lang, 's-voice');
+      updateConditionalPanels(lang);
+    }
+  } catch (_) { hideLangBadge(); }
+}
+
+function hideLangBadge() {
+  const badge = $id('lang-badge');
+  badge.classList.remove('show');
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK-802: Tab 1 — Single synthesis
+   ════════════════════════════════════════════════════════════════════════════ */
+async function loadVoices(lang, selectId) {
+  const sel = $id(selectId);
+  if (lang === 'auto') {
+    sel.innerHTML = '<option value="">— chọn ngôn ngữ trước —</option>';
+    return;
+  }
+  try {
+    const res = await apiPost('/api/voices', { lang });
+    if (res.status !== 'ok') {
+      sel.innerHTML = '<option value="" disabled selected>— engine chưa được cài đặt —</option>';
+      return;
+    }
+
+    const voices = res.voices;
+    // Check if any voice has a 'group' field → render <optgroup>
+    const hasGroups = voices.some(v => v.group);
+
+    if (hasGroups) {
+      // Build ordered group map preserving insertion order
+      const groups = {};
+      voices.forEach(v => {
+        const g = v.group || '—';
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(v);
+      });
+      sel.innerHTML = Object.entries(groups).map(([grp, items]) =>
+        `<optgroup label="${escAttr(grp)}">${
+          items.map(v =>
+            `<option value="${escAttr(v.id)}" title="${escAttr(v.desc||'')}">${escHtml(v.label)}</option>`
+          ).join('')
+        }</optgroup>`
+      ).join('');
+    } else {
+      sel.innerHTML = voices.map(v =>
+        `<option value="${escAttr(v.id)}" title="${escAttr(v.desc||'')}">${escHtml(v.label)}</option>`
+      ).join('');
+    }
+  } catch (_) {
+    sel.innerHTML = '<option value="">— không tải được —</option>';
+  }
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function onSingleLangChange() {
+  const lang = $id('s-lang').value;
+  loadVoices(lang, 's-voice');
+  updateConditionalPanels(lang);
+  hideLangBadge();
+}
+
+function updateConditionalPanels(lang) {
+  document.querySelectorAll('.vi-only').forEach(el =>
+    el.style.display = lang === 'vi' ? 'flex' : 'none');
+  document.querySelectorAll('.ja-only').forEach(el =>
+    el.style.display = lang === 'ja' ? 'flex' : 'none');
+}
+
+async function doSynthesize() {
+  if (S.isSynthesizing) return;
+  const text = $id('s-text').value.trim();
+  if (!text) { showMsg('s-status', '⚠ Vui lòng nhập văn bản.', 'error'); return; }
+
+  S.isSynthesizing = true;
+  $id('s-btn').disabled = true;
+  $id('s-spinner').classList.add('show');
+  $id('s-btn-text').textContent = 'Đang tổng hợp…';
+  $id('audio-wrap').classList.remove('show');
+  hideMsg('s-status');
+  $id('s-progress-wrap').classList.add('show');
+  $id('s-progress-label').textContent = 'Đang tổng hợp…';
+  setStatus('Synthesizing…', 'busy');
+
+  const lang    = $id('s-lang').value;
+  const voice   = $id('s-voice').value;
+  const speed   = parseFloat($id('s-speed').value);
+  const mode_vi = $id('s-mode').value || 'standard';
+  const fmt     = 'wav';
+
+  try {
+    const res = await apiPost('/api/synthesize', { text, lang, voice, speed, mode_vi, format: fmt });
+    if (res.status !== 'ok') {
+      const fix = res.fix ? ` — ${res.fix}` : '';
+      throw new Error((res.message || 'Synthesis failed') + fix);
+    }
+
+    const mime    = fmt === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+    const dataUrl = `data:${mime};base64,${res.audio_b64}`;
+    $id('audio-player').src = dataUrl;
+
+    const dur     = res.duration ? `${res.duration.toFixed(2)}s` : '?';
+    const voiceLbl = $id('s-voice').selectedOptions[0]?.text || voice;
+    $id('audio-meta').innerHTML =
+      `<strong>${dur}</strong> · ${voiceLbl} · ${speed.toFixed(2)}×`;
+
+    $id('audio-wrap').classList.add('show');
+    $id('audio-player').play().catch(() => {});
+    showMsg('s-status', `✅ Hoàn tất — ${dur} audio được tạo.`, 'ok');
+    setStatus('Ready', '');
+  } catch (err) {
+    showMsg('s-status', `❌ Lỗi: ${err.message}`, 'error');
+    setStatus('Error', 'error');
+  } finally {
+    S.isSynthesizing = false;
+    $id('s-btn').disabled = false;
+    $id('s-spinner').classList.remove('show');
+    $id('s-btn-text').textContent = '🎙️ Tạo Audio';
+    $id('s-progress-wrap').classList.remove('show');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK-803: Tab 2 — Batch file drag & drop
+   ════════════════════════════════════════════════════════════════════════════ */
+function onDragOver(e)  { e.preventDefault(); $id('drop-zone').classList.add('drag-over'); }
+function onDragLeave()  { $id('drop-zone').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault(); onDragLeave();
+  const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.txt'));
+  files.forEach(readFileObj);
+}
+function onFileInputChange(e) {
+  [...e.target.files].filter(f => f.name.endsWith('.txt')).forEach(readFileObj);
+  e.target.value = '';
+}
+function readFileObj(file) {
+  const reader = new FileReader();
+  reader.onload = ev => addBatchFile(file.name, ev.target.result);
+  reader.readAsText(file, 'utf-8');
+}
+function addBatchFile(name, content) {
+  if (S.batchFiles.find(f => f.name === name)) return; // dedupe
+  S.batchFiles.push({ name, content, lang: null });
+  renderFileChips();
+  // Detect lang for chip icon
+  if (content.trim().length >= 5) {
+    apiPost('/api/detect_lang', { text: content.slice(0, 300) }).then(res => {
+      const idx = S.batchFiles.findIndex(f => f.name === name);
+      if (idx >= 0 && res.status === 'ok') {
+        S.batchFiles[idx].lang = res.lang;
+        renderFileChips();
+      }
+    }).catch(() => {});
+  }
+}
+function removeBatchFile(idx) {
+  S.batchFiles.splice(idx, 1);
+  renderFileChips();
+}
+function renderFileChips() {
+  const langIcon = { en: '🇺🇸', vi: '🇻🇳', ja: '🇯🇵', unknown: '❓', null: '⋯' };
+  const container = $id('file-chips');
+  if (S.batchFiles.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = S.batchFiles.map((f, i) => `
+    <div class="file-chip" title="${f.name}">
+      <span class="chip-lang">${langIcon[f.lang] ?? '⋯'}</span>
+      <span class="chip-name">${f.name}</span>
+      <button class="chip-remove" onclick="removeBatchFile(${i})" title="Xoá">×</button>
+    </div>`).join('');
+}
+
+function onBatchLangChange() {
+  const lang = $id('b-lang').value;
+  loadVoices(lang, 'b-voice');
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK-805: Batch processing with job polling
+   ════════════════════════════════════════════════════════════════════════════ */
+async function startBatch() {
+  if (S.batchFiles.length === 0) {
+    showMsg('b-status', '⚠ Chưa có file nào. Kéo & thả file .txt vào vùng bên trên.', 'error');
+    return;
+  }
+  if (S.batchPoll) return; // already running
+
+  // Reset UI
+  $id('log-box').innerHTML = '';
+  $id('log-box').classList.remove('show');
+  $id('log-title').style.display = 'none';
+  hideMsg('b-status');
+  S.batchLogCount = 0;
+
+  $id('b-btn').disabled = true;
+  $id('b-spinner').classList.add('show');
+  $id('b-btn-text').textContent = 'Đang xử lý…';
+  setStatus('Batch running…', 'busy');
+
+  const lang       = $id('b-lang').value;
+  const voice      = $id('b-voice').value;
+  const speed      = parseFloat($id('b-speed').value);
+  const exportDir  = $id('b-export-dir').value.trim() || './output';
+  const files      = S.batchFiles.map(f => ({
+    name:          f.name,
+    content:       f.content,
+    lang_override: lang === 'auto' ? null : lang,
+  }));
+
+  const voiceCfg = {};
+  if (lang !== 'auto') voiceCfg.lang = lang;
+  if (voice) {
+    if (lang === 'en' || voice.startsWith('am_') || voice.startsWith('af_') ||
+        voice.startsWith('bm_') || voice.startsWith('bf_'))
+      voiceCfg.voice_en = voice;
+    else if (lang === 'ja' || voice.startsWith('jvnv'))
+      voiceCfg.voice_ja = voice;
+  }
+  voiceCfg.speed_en = speed;
+  voiceCfg.speed_vi = speed;
+  voiceCfg.speed_ja = speed;
+
+  try {
+    const res = await apiPost('/api/batch', {
+      files, voice_config: voiceCfg,
+      format: S.format, export_dir: exportDir,
+    });
+    if (res.status !== 'ok') throw new Error(res.message || 'Batch failed to start');
+
+    S.batchJobId = res.job_id;
+    const total  = res.total;
+
+    // Show progress
+    $id('batch-progress-wrap').classList.add('show');
+    $id('batch-progress-label').textContent = `Đang xử lý… 0/${total}`;
+    $id('batch-progress-bar').style.width = '0%';
+
+    // Start polling every 1 second
+    S.batchPoll = setInterval(() => pollBatchJob(total), 1000);
+
+  } catch (err) {
+    batchFinished(false, err.message);
+  }
+}
+
+async function pollBatchJob(total) {
+  try {
+    const job = await apiGet(`/api/job/${S.batchJobId}`);
+
+    // Update progress bar
+    const pct       = job.progress_pct || 0;
+    const completed = job.completed || 0;
+    const curFile   = job.current_file || '…';
+    $id('batch-progress-bar').style.width = pct + '%';
+    $id('batch-progress-label').textContent =
+      `Đang xử lý file ${completed}/${total}: ${curFile}`;
+
+    // Append new result lines to log
+    const results = job.results || [];
+    while (S.batchLogCount < results.length) {
+      appendLogEntry(results[S.batchLogCount]);
+      S.batchLogCount++;
+    }
+
+    if (job.status === 'done' || job.status === 'error') {
+      clearInterval(S.batchPoll);
+      S.batchPoll = null;
+
+      if (job.status === 'done') {
+        const ok  = results.filter(r => r.status === 'ok').length;
+        const err = results.filter(r => r.status !== 'ok').length;
+        batchFinished(true, `✅ Hoàn tất: ${ok} file thành công${err ? `, ${err} lỗi` : ''}.`);
+      } else {
+        batchFinished(false, `❌ Batch thất bại: ${(job.errors[0]||{}).error || 'unknown'}`);
+      }
+    }
+  } catch (_) { /* network glitch — keep polling */ }
+}
+
+function appendLogEntry(result) {
+  const box = $id('log-box');
+  $id('log-title').style.display = '';
+  box.classList.add('show');
+
+  const isOk = result.status === 'ok';
+  const dur  = result.duration ? `${result.duration.toFixed(2)}s` : '';
+  const lang = result.detected_lang ? ` [${result.detected_lang.toUpperCase()}]` : '';
+  const msg  = isOk
+    ? result.output_path
+        ? result.output_path.split(/[\\/]/).pop()
+        : result.file_name
+    : result.error || 'Lỗi không xác định';
+
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${isOk ? 'log-ok' : 'log-err'}`;
+  entry.innerHTML = `
+    <span class="log-icon">${isOk ? '✅' : '❌'}</span>
+    <span class="log-text">${escHtml(msg)}</span>
+    ${isOk ? `<span class="log-meta">${dur}${lang}</span>` : ''}`;
+  box.appendChild(entry);
+  box.scrollTop = box.scrollHeight;
+}
+
+function batchFinished(ok, message) {
+  clearInterval(S.batchPoll);
+  S.batchPoll = null;
+  $id('b-btn').disabled = false;
+  $id('b-spinner').classList.remove('show');
+  $id('b-btn-text').textContent = '🎙️ Tạo Audio Hàng Loạt';
+  $id('batch-progress-wrap').classList.remove('show');
+  showMsg('b-status', message, ok ? 'ok' : 'error');
+  setStatus(ok ? 'Ready' : 'Error', ok ? '' : 'error');
+}
+
+/* ── Misc ────────────────────────────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function loadEngineStatus() {
+  try {
+    const langs = ['en', 'ja', 'vi'];
+    const results = await Promise.all(langs.map(l => apiPost('/api/voices', { lang: l })));
+    const icons = { en: '🇺🇸', vi: '🇻🇳', ja: '🇯🇵' };
+    const available = [];
+    langs.forEach((lang, i) => {
+      if (results[i].status === 'ok') {
+        available.push(lang);
+      } else {
+        // Disable option trong tất cả các select ngôn ngữ
+        document.querySelectorAll(`option[value="${lang}"]`).forEach(opt => {
+          opt.disabled = true;
+          opt.textContent += ' — chưa cài';
+        });
+      }
+    });
+    $id('footer-engines').textContent = 'Engines: ' +
+      (available.length ? available.map(l => icons[l]).join(' ') : '(không có)');
+  } catch (_) {}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# =============================================================================
+# TTS Studio Pro — Requirements
+# Python >= 3.10
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Core TTS Engines
+# ---------------------------------------------------------------------------
+kokoro>=0.9.0               # Engine tiếng Anh (Kokoro TTS, 82M params)
+# vieneu>=1.0.0             # Engine tiếng Việt (VieNeu-TTS) — cài thủ công nếu chưa có trên PyPI
+style-bert-vits2            # Engine tiếng Nhật — primary (nhẹ hơn, chạy được CPU)
+# fish-speech               # Engine tiếng Nhật — fallback nếu có GPU
+
+# ---------------------------------------------------------------------------
+# Audio Processing
+# ---------------------------------------------------------------------------
+soundfile>=0.12.0           # Đọc/ghi WAV
+numpy>=1.24.0               # Xử lý audio array
+pydub>=0.25.0               # Xuất MP3 (cần ffmpeg cài sẵn trên hệ thống)
+
+# ---------------------------------------------------------------------------
+# Language Detection
+# ---------------------------------------------------------------------------
+langdetect>=1.0.9           # Detect ngôn ngữ cơ bản
+lingua-language-detector>=2.0.0  # Chính xác hơn cho VI/JA
+
+# ---------------------------------------------------------------------------
+# Japanese Text Processing
+# ---------------------------------------------------------------------------
+pyopenjtalk                 # Text normalization cho tiếng Nhật (Kanji/Hiragana/Katakana)
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+tqdm>=4.65.0                # Progress bar cho batch processing
+
+# ---------------------------------------------------------------------------
+# NOTE: http.server dùng built-in Python — không cần cài thêm
+# NOTE: pathlib dùng built-in Python (3.4+) — không cần cài thêm
+# NOTE: ffmpeg là system dependency — cài riêng, không qua pip:
+#         Windows: winget install Gyan.FFmpeg
+#         macOS:   brew install ffmpeg
+#         Linux:   sudo apt install ffmpeg
+# ---------------------------------------------------------------------------
